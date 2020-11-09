@@ -11,6 +11,7 @@
 #     print(table)
 #     return table
 
+
 def get_solution(table):
     return get_coeffs(table, len(table[0]) - 1, 0)
 
@@ -37,7 +38,7 @@ def get_pivot(table):
     obj_func = table[0]
     entering_index = get_entering_index(table)
     # print(entering_var, entering_index)
-    rhs_coeffs = get_coeffs(table, index=len(obj_func) - 1)
+    rhs_coeffs = get_coeffs(table, index=len(obj_func) - 1, start=1)
     pivot_coeffs = get_coeffs(table, index=entering_index, start=1)
     # print(rhs_coeffs)
     # print(pivot_coeffs)
@@ -48,8 +49,33 @@ def get_pivot(table):
             ratios.append(0)
         else:
             ratios.append(rhs_var / pivot_var)
-    exiting_index = ratios.index(min(ratios)) + 1
+    exiting_index = ratios.index(min([i for i in ratios if i > 0])) + 1
     return entering_index, exiting_index
+
+
+def next_iteration(table):
+    entering_col, exiting_row = get_pivot(table)
+    pivot_row = table[exiting_row]
+    pivot_col = get_coeffs(table, index=entering_col, start=0)
+    pivot = table[exiting_row][entering_col]
+    # print(pivot_row)
+    # print(pivot)
+    if pivot != 1:
+        pivot_row = [(var / pivot) for var in pivot_row]
+        # print(pivot_row)
+        # print(pivot)
+        table[exiting_row] = pivot_row
+        pivot = table[exiting_row][entering_col]
+        # print_table(table)
+    for r, row in enumerate(table):
+        multiplier = -row[entering_col]
+        for c, var in enumerate(row):
+            if r != exiting_row:
+                # print(var, multiplier, sep=" ")
+                table[r][c] = var + multiplier * table[exiting_row][c]
+                # print(table[r][c])
+    print_table(table)
+    return table
 
 
 def print_table(table):
@@ -65,31 +91,18 @@ def print_table(table):
             print("------------------------------", end="")
         print()
     print("------------------------------")
+    # print(np.array(table))
+    print()
+
+    # pivot and return new table
 
 
-# pivot and return new table
 if __name__ == "__main__":
     # variables = int(input("Enter the number of variables: "))
     # constraints = int(input("Enter the number of constraints: "))
     # generate_table(variables, constraints)
-    print("hi")
     t = [[-4, -3, 0, 0, 0], [1, 1, 1, 0, 40], [2, 1, 0, 1, 60]]
     t1 = [[-1, -2, -2, 0, 0, 0], [2, 1, 0, 1, 0, 8], [0, 0, 1, 0, 1, 10]]
-    print(get_solution(t1))
     print_table(t)
-    # a = np.array([[-4, -3, 0], [1, 1, 1], [2, 1, 0]])
-    # b = np.array([0, 40, 60])
-    # x = np.linalg.solve(a, b)
-    # print(x)
-# get number of towns
-# enter average for each town
-# enter position for each town
-# for each town: 2 constraints
-# 1 0 1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 10
-# 0 1 0 0 1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 20
-# 1 0 0 0 0 0 1 -1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 60
-# 0 1 0 0 0 0 0 0 1 -1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 20
-# 1 0 0 0 0 0 0 0 0 0 1 -1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 40
-# 0 1 0 0 0 0 0 0 0 0 0 0 1 -1 0 0 0 0 0 0 0 0 0 1 0 0 30
-# 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 -1 0 0 0 0 0 0 0 0 1 0 80
-# 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 -1 0 0 0 0 0 0 0 1 60
+    while not is_final_table(t):
+        t1 = next_iteration(t)
