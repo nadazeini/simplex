@@ -11,7 +11,7 @@ def get_coeffs(table, index, start):
 
 
 def is_final_table(table):
-    obj_func = table[0]
+    obj_func = table[0][:len(table[0]) - 1]
     for var in obj_func:
         if var < 0:
             return False
