@@ -19,48 +19,91 @@ def is_final_table(table):
     return True
 
 
-def get_entering_index(table):
-    return table[0].index(min(table[0][:len(table[0]) - 2]))
+def get_entering_index(table, skip):
+    obj_row = table[0][:len(table[0]) - 2]
+    pair = [(i, num) for i, num in enumerate(obj_row) if num < 0 and i not in skip]
+    if len(pair) == 0:
+        return "no pivot"
+    min_pair = min(pair, key=lambda p: p[1])
+    print(min_pair)
+    entering_index = min_pair[0]
+    # entering_index = indices[0]
+    print(entering_index)
+    if entering_index is None:
+        return "no pivot"
+    return entering_index
 
 
-def get_pivot_in_iteration(table):
+def get_pivot_in_iteration(table, skip):
     obj_func = table[0]
-    entering_index = get_entering_index(table)
+    count = 0
+    entering_index = get_entering_index(table, skip)
+    if entering_index == "no pivot":
+        return "no pivot"
     rhs_coeffs = get_coeffs(table, index=len(obj_func) - 1, start=1)
     pivot_coeffs = get_coeffs(table, index=entering_index, start=1)
     zipped_lists = zip(rhs_coeffs, pivot_coeffs)
     ratios = []
     for (rhs_var, pivot_var) in zipped_lists:
-        if pivot_var == 0:
-            ratios.append(0)
+        if pivot_var <= 0:
+            ratios.append("")
         else:
-            ratios.append(rhs_var / pivot_var)
-    positive_ratios = [i for i in ratios if i > 0]
-    if len(positive_ratios) == 0:
-        return "no pivot"
-    exiting_index = ratios.index(min(positive_ratios)) + 1
-    return entering_index, exiting_index
+            if rhs_var == 0:
+                ratios.append(rhs_var)
+            else:
+                ratios.append(rhs_var / pivot_var)
+    print("ratios ", ratios)
+    positive_ratios = [i for i in ratios if i != "" and i >= 0]
+    print("positive ratios ", positive_ratios)
+    while len(positive_ratios) == 0:
+        count = 0
+        if entering_index != len(table[0]) - 2:
+            skip.add(entering_index)
+            print("skip ", skip)
+        entering_index = get_entering_index(table, skip)
+        if entering_index == "no pivot":
+            return "no pivot"
+        pivot_coeffs = get_coeffs(table, index=entering_index, start=1)
+        zipped_lists = zip(rhs_coeffs, pivot_coeffs)
+        ratios = []
+        for (rhs_var, pivot_var) in zipped_lists:
+            if pivot_var <= 0:  # check if denominator is neg or 0 if so skip
+                ratios.append("")
+            else:
+                if rhs_var == 0:
+                    ratios.append(rhs_var)
+                    print("appended 0 ", ratios)
+                else:
+                    ratios.append(rhs_var / pivot_var)
+        print("ratios ", ratios)
+        positive_ratios = [i for i in ratios if i != "" and i >= 0]
+        print("positive ratios ", positive_ratios)
+    return entering_index, ratios.index(min(positive_ratios)) + 1
 
 
 def do_pivot(table, entering_col, exiting_row, pivot):
     pivot_row = table[exiting_row]
+    print("exiting ", exiting_row, "entering ", entering_col, "element ", table[exiting_row][entering_col])
     if pivot != 1:
         pivot_row = [(var / pivot) for var in pivot_row]
         table[exiting_row] = pivot_row
         pivot = table[exiting_row][entering_col]
     for r, row in enumerate(table):
-        print("entering col", entering_col, sep=" ")
-        multiplier = (-1) * row[entering_col]
-        print("mult ", multiplier)
+        if row[entering_col] == 0:
+            multiplier = 0
+        else:
+            multiplier = row[entering_col]
         for c, var in enumerate(row):
             if r != exiting_row:
-                table[r][c] = var + multiplier * table[exiting_row][c]
+                table[r][c] = var - multiplier * table[exiting_row][c]
 
 
 def next_iteration(table):
-    if get_pivot_in_iteration(table) == "no pivot":
+    skip = set()
+    copy = table[0][:len(table[0]) - 2]
+    if get_pivot_in_iteration(table, skip) == "no pivot":
         return "infeasible"
-    entering_col, exiting_row = get_pivot_in_iteration(table)
+    entering_col, exiting_row = get_pivot_in_iteration(table, skip)
     pivot_col = get_coeffs(table, index=entering_col, start=0)
     pivot = table[exiting_row][entering_col]
     do_pivot(table, entering_col, exiting_row, pivot)
@@ -69,7 +112,8 @@ def next_iteration(table):
 
 
 def print_table(table):
-    print("------------------------------")
+    print(
+        "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
     for row in table:
         for col in row:
             if col < 0:
@@ -78,9 +122,12 @@ def print_table(table):
                 print(col, end="  |  ")
         if table.index(row) == 0:
             print()
-            print("------------------------------", end="")
+            print(
+                "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",
+                end="")
         print()
-    print("------------------------------")
+    print(
+        "------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
     print()
 
 
@@ -171,29 +218,35 @@ def phase2(table, obj_func, total_vars, total_art_vars):
 
 
 if __name__ == "__main__":
-    objective_func = [5, 1]
+    objective_func = [-5, -1]
     z_prime = [0, 0, 1, 1, 0]
     first_table = [z_prime, [1, -3, 1, 0, 1], [2, -1, 0, 1, 3]]
-    two_phase_simplex(first_table, obj_func=objective_func, total_art_vars=2, total_vars=4)
+    # two_phase_simplex(first_table, obj_func=objective_func, total_art_vars=2, total_vars=4)
 
-# variables = int(input("Enter the number of variables: "))
-# constraints = int(input("Enter the number of constraints: "))
-# generate_table(variables, constraints)
+    # variables = int(input("Enter the number of variables: "))
+    # constraints = int(input("Enter the number of constraints: "))
+    # generate_table(variables, constraints)
 
-# TODO: organize start of main problem
-# variables = ["d1", "d2", "d3", "d4"]
-# artificial_variables = []
-# const_num = 8
-# z = [20, 30, 40, 25]
-# t1 = [[-1, -2, -2, 0, 0, 0], [2, 1, 0, 1, 0, 8], [0, 0, 1, 0, 1, 10]]
-# pb = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-#       [1, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 10],
-#       [0, 1, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 20],
-#       [1, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 60],
-#       [0, 1, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 20],
-#       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 40],
-#       [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 30],
-#       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 80],
-#       [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 60]]
-# two_phase_simplex(table=pb, obj_func=[0, 0, 20, 20, 20, 20, 30, 30, 30, 30, 40, 40, 40, 40, 25, 25, 25, 25],
-#                   total_vars=26, total_art_vars=8)
+    # TODO: organize start of main problem
+    # variables = ["d1", "d2", "d3", "d4"]
+    artificial_variables = []
+    const_num = 8
+    z = [0, 0, -20, -30, -40, -25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    z_prime = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+               0]
+    pb = [z_prime,
+          # x, y, d1 d2 d3 d4 e1 w1 n1 s1 e1 w1 n1 s1  e1 w1 n1 s1  e1 w1 n1 s1  e1 w1 n1 s1 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12
+          [0, 0, 1, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [1, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 10],
+          [0, 1, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 20],
+          [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 60],
+          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 20],
+          [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 40],
+          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 30],
+          [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 80],
+          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 60]
+          ]
+    two_phase_simplex(table=pb, obj_func=z, total_vars=34, total_art_vars=12)
