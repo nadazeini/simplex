@@ -23,7 +23,7 @@ def get_entering_index(table):
     return table[0].index(min(table[0][:len(table[0]) - 2]))
 
 
-def get_pivot(table):
+def get_pivot_in_iteration(table):
     obj_func = table[0]
     entering_index = get_entering_index(table)
     rhs_coeffs = get_coeffs(table, index=len(obj_func) - 1, start=1)
@@ -49,16 +49,18 @@ def do_pivot(table, entering_col, exiting_row, pivot):
         table[exiting_row] = pivot_row
         pivot = table[exiting_row][entering_col]
     for r, row in enumerate(table):
-        multiplier = -row[entering_col]
+        print("entering col", entering_col, sep=" ")
+        multiplier = (-1) * row[entering_col]
+        print("mult ", multiplier)
         for c, var in enumerate(row):
             if r != exiting_row:
                 table[r][c] = var + multiplier * table[exiting_row][c]
 
 
 def next_iteration(table):
-    if get_pivot(table) == "no pivot":
+    if get_pivot_in_iteration(table) == "no pivot":
         return "infeasible"
-    entering_col, exiting_row = get_pivot(table)
+    entering_col, exiting_row = get_pivot_in_iteration(table)
     pivot_col = get_coeffs(table, index=entering_col, start=0)
     pivot = table[exiting_row][entering_col]
     do_pivot(table, entering_col, exiting_row, pivot)
@@ -94,7 +96,7 @@ def simplex_method(table):
             break
 
 
-def get_pivot_positions(table, num_of_var, num_of_art_var):
+def get_artificial_vars_pivot_positions(table, num_of_var, num_of_art_var):
     art_var_index = num_of_var - num_of_art_var
     row = 1
     positions = []
@@ -107,10 +109,8 @@ def get_pivot_positions(table, num_of_var, num_of_art_var):
     return positions
 
 
-# def make_ready(table, total_vars, total_art_vars):
-
 def phase1(table, total_vars, total_art_vars):
-    positions = get_pivot_positions(table, total_vars, total_art_vars)
+    positions = get_artificial_vars_pivot_positions(table, total_vars, total_art_vars)
     if positions == "wrong format":
         print("wrong format")
         return "wrong format"
@@ -171,25 +171,29 @@ def phase2(table, obj_func, total_vars, total_art_vars):
 
 
 if __name__ == "__main__":
-    # variables = int(input("Enter the number of variables: "))
-    # constraints = int(input("Enter the number of constraints: "))
-    # generate_table(variables, constraints)
-    t = [[-4, -3, 0, 0, 0], [1, 1, 1, 0, 40], [2, 1, 0, 1, 60]]
-    dual1 = [[0, 0, 0, 1, 1, 0], [1, 0, -1, 1, 0, 10], [0, 1, 1, 0, 1, 30]]
-    dual2 = [[0, 0, 0, 1, 1, 0], [1, 1, 0, 1, 0, 5], [1, 0, 2, 0, 1, 3]]
-    # e w s n
-    t1 = [[-1, -2, -2, 0, 0, 0], [2, 1, 0, 1, 0, 8], [0, 0, 1, 0, 1, 10]]
-    pb = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-          [1, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 10],
-          [0, 1, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 20],
-          [1, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 60],
-          [0, 1, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 20],
-          [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 40],
-          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 30],
-          [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 80],
-          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 60]]
-    # two_phase_simplex(dual1, [5, 2, 10], 5, 2)
-    # two_phase_simplex(table=dual2, obj_func=[1, 1, 2], total_vars=5, total_art_vars=2)
-    two_phase_simplex(table=pb, obj_func=[0, 0, 20, 20, 20, 20, 30, 30, 30, 30, 40, 40, 40, 40, 25, 25, 25, 25],
-                      total_vars=26, total_art_vars=8)
-    # simplex_method(t)
+    objective_func = [5, 1]
+    z_prime = [0, 0, 1, 1, 0]
+    first_table = [z_prime, [1, -3, 1, 0, 1], [2, -1, 0, 1, 3]]
+    two_phase_simplex(first_table, obj_func=objective_func, total_art_vars=2, total_vars=4)
+
+# variables = int(input("Enter the number of variables: "))
+# constraints = int(input("Enter the number of constraints: "))
+# generate_table(variables, constraints)
+
+# TODO: organize start of main problem
+# variables = ["d1", "d2", "d3", "d4"]
+# artificial_variables = []
+# const_num = 8
+# z = [20, 30, 40, 25]
+# t1 = [[-1, -2, -2, 0, 0, 0], [2, 1, 0, 1, 0, 8], [0, 0, 1, 0, 1, 10]]
+# pb = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+#       [1, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 10],
+#       [0, 1, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 20],
+#       [1, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 60],
+#       [0, 1, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 20],
+#       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 40],
+#       [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 30],
+#       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 80],
+#       [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 60]]
+# two_phase_simplex(table=pb, obj_func=[0, 0, 20, 20, 20, 20, 30, 30, 30, 30, 40, 40, 40, 40, 25, 25, 25, 25],
+#                   total_vars=26, total_art_vars=8)
