@@ -1,6 +1,10 @@
 import numpy as np
 
 
+# Done by Nada El Zeini
+# Print statement can be commented out to show at what step the solver is at
+# functions are not defined in particular order
+
 def get_solution(table):
     obj_func = table[0]
     # get right hand side value
@@ -10,11 +14,13 @@ def get_solution(table):
         print(var, " = ", rhs_coeffs[i])
 
 
+# this function return the coefficients of a column at index, starting at row start
 def get_coeffs(table, index, start):
     coeffs = [var[index] for var in table]
     return coeffs[start:]
 
 
+# checks whether we still have negative numbers in objective function row
 def is_final_table(table):
     obj_func = table[0][:len(table[0]) - 1]
     for var in obj_func:
@@ -24,6 +30,7 @@ def is_final_table(table):
     return True
 
 
+# gets the entering index, skip is a set containing entering indices that were already tried
 def get_entering_index(table, skip):
     obj_row = table[0][:len(table[0]) - 2]
     pair = [(i, num) for i, num in enumerate(obj_row) if num < 0 and i not in skip]
@@ -36,11 +43,13 @@ def get_entering_index(table, skip):
     return entering_index
 
 
+# keeps track of entered and exited variable names
 def enter_exit_variable(table, entering_index, exiting_index):
     enter = row_vars[entering_index]
     basic_vars[exiting_index - 1] = enter
 
 
+# get appropriate pivot position
 def get_pivot_in_iteration(table, skip):
     obj_func = table[0]
     entering_index = get_entering_index(table, skip)
@@ -81,6 +90,7 @@ def get_pivot_in_iteration(table, skip):
     return entering_index, ratios.index(min(positive_ratios)) + 1
 
 
+# do_pivot makes everything above and below the given position zero
 def do_pivot(table, entering_col, exiting_row, pivot):
     pivot_row = table[exiting_row]
     if pivot != 1:
@@ -97,6 +107,7 @@ def do_pivot(table, entering_col, exiting_row, pivot):
                 table[r][c] = var - (multiplier * table[exiting_row][c])
 
 
+# returns the next table
 def next_iteration(table):
     skip = set()
     copy = table[0][:len(table[0]) - 2]
@@ -130,6 +141,7 @@ def print_table(table):
     print()
 
 
+# keeps iterating to next table until table is final (no more negatives in 1st row)
 def simplex_method(table, is_phase2):
     if is_final_table(table):
         print("Final table:")
@@ -146,6 +158,7 @@ def simplex_method(table, is_phase2):
             break
 
 
+# get the positions of the pivots of artificial variables (used to make ready for simplex method)
 def get_artificial_vars_pivot_positions(table, num_of_var, num_of_art_var):
     art_var_index = num_of_var - num_of_art_var
     row = 1
@@ -182,6 +195,7 @@ def is_phase2_ready(table, total_vars, total_art_vars):
     return True
 
 
+# main function to run
 def two_phase_simplex(table, obj_func, total_vars, total_art_vars):
     phase1(table, total_vars, total_art_vars)
     if is_phase2_ready(table, total_vars, total_art_vars):
@@ -190,6 +204,7 @@ def two_phase_simplex(table, obj_func, total_vars, total_art_vars):
     return
 
 
+# used in phase 2, to make ready to start simplex method
 def make_ready_for_simplex(table):
     # get positions of pivots
     positions = []
@@ -212,20 +227,19 @@ def phase2(table, obj_func, total_vars, total_art_vars):
     make_ready_for_simplex(new_table)  # should make ready the basic variable (in first column)
     # print("ready for simplex now")
     # print_table(new_table)
+    # is_phase2 used to check if the final table is the one at phase 2
     is_phase2 = True
     simplex_method(new_table, is_phase2)
     return new_table
 
 
+# Global variables, to make code more readable (not having to pass as arguments to all functions)
 is_phase2 = False
 row_vars = ["x", "y", "d1", "d2", "d3", "d4", "e1", "e2", "e3", "e4", "w1", "w2", "w3", "w4", "n1", "n2", "n3",
             "n4", "s1", "s2", "s3", "s4", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12"]
-artificial_vars = ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12"]
 basic_vars = ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12"]
+
 if __name__ == "__main__":
-    # variables = int(input("Enter the number of variables: "))
-    # constraints = int(input("Enter the number of constraints: "))
-    # generate_table(variables, constraints)
     z = [0, 0, 20, 30, 40, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     z_prime = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                0]
@@ -243,4 +257,7 @@ if __name__ == "__main__":
           [0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
           [0, 0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
           ]
-    two_phase_simplex(table=pb, obj_func=z, total_vars=34, total_art_vars=12)
+    total_vars = len(row_vars)
+    total_art_vars = len(basic_vars)
+    # start solving here
+    two_phase_simplex(table=pb, obj_func=z, total_vars=total_vars, total_art_vars=total_art_vars)
