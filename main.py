@@ -124,6 +124,7 @@ def phase1(table, total_vars, total_art_vars):
 
 #         replace row 0 with objective function and remove art variables
 
+# this function checks if phase 2 is possible
 def is_phase2_ready(table, total_vars, total_art_vars):
     # TODO:    usually check if artificial vars are still in column 0 - if yes - infeasable else ready for phase 1
     # TODO: never mind - can just check if artifical vars are 1 in obj row and that z' is 0
@@ -140,16 +141,32 @@ def two_phase_simplex(table, obj_func, total_vars, total_art_vars):
     phase1(table, total_vars, total_art_vars)
     print("phase 1 over")
     if is_phase2_ready(table, total_vars, total_art_vars):
+        print("ready")
         phase2(table, obj_func, total_vars, total_art_vars)
     return
 
 
+def make_ready_for_simplex(table):
+    # get positions of pivots
+    positions = []
+    for col in range(0, len(table[0]) - 1):
+        row = col + 1
+        position = (row, col)
+        positions.append(position)
+    for (row, col) in positions:
+        do_pivot(table, exiting_row=row, entering_col=col, pivot=table[row][col])
+
+
 def phase2(table, obj_func, total_vars, total_art_vars):
     print("phase2")
+    # replace the first row with the objective function and remove artificial variables
     new_table = np.array(table)
     new_table = np.delete(new_table, np.s_[total_vars - total_art_vars:len(table[0]) - 1], axis=1)
     new_table[0][0:len(new_table[0]) - 1] = obj_func
     new_table = new_table.tolist()
+    # before simplex method need to make it ready - by pivoting
+    print_table(new_table)
+    make_ready_for_simplex(new_table)
     simplex_method(new_table)
 
 
